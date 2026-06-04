@@ -267,8 +267,33 @@ func ExecuteMov(inst Instruction) error {
 	case inst[Opcode] == 0b1011:
 		return storeToRegister(byte(inst[Reg]), inst[W] == 1, inst[Data])
 	case inst[Opcode]>>2 == 0b100011:
+		sr := byte(inst[SR])
+		rm := byte(inst[RM])
+		mod := byte(inst[Mod])
+		disp := int16(inst[Disp])
 		if inst[D] == 0 {
+			src := segmentRegisters[sr]
+			if mod == 0b11 {
+				return storeToRegister(rm, true, src)
+			}
+			addr := decodeEffectiveAddr(rm, disp, mod)
+			return storeMemory(addr, src, true)
 		} else {
+			if mod == 0b11 {
+				src := loadFromRegister(rm, true)
+				segmentRegisters[sr] = src
+				return nil
+			}
+			addr := decodeEffectiveAddr(rm, disp, mod)
+			src, err := loadMemory(addr, true)
+			if err != nil {
+				return fmt.Errorf("error loading address %b: %w", addr, err)
+			}
+			if _, ok := segmentRegisters[sr]; !ok {
+				return fmt.Errorf("No segment register found: %0b", sr)
+			}
+			segmentRegisters[sr] = src
+			return nil
 		}
 	}
 	return fmt.Errorf("Opcode %b Not found", inst[Opcode])
