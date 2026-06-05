@@ -1,0 +1,72 @@
+package emulator
+
+type Instruction map[FieldKind]uint16
+
+func checkMod(data []byte, mod uint16, rm uint16, bitPos int) (uint16, int) {
+	switch mod {
+	case 0b11:
+		return 0, 0
+	case 0b00:
+		if rm == 0b110 {
+			lo := ReadBits(data, bitPos, 8)
+			hi := ReadBits(data, bitPos+8, 8)
+			disp := hi<<8 | lo
+			return disp, 16
+		}
+		return 0, 0
+	case 0b01:
+		return ReadBits(data, bitPos, 8), 8
+	case 0b10:
+		lo := ReadBits(data, bitPos, 8)
+		hi := ReadBits(data, bitPos+8, 8)
+		disp := hi<<8 | lo
+		return disp, 16
+	}
+	return 0, 0
+}
+
+func DecodeInstructions(data []byte) []Instruction {
+	bitPos := 0
+	var instructions []Instruction
+	for bitPos < len(data)*8 {
+		for _, inst := range instructionPatterns {
+			opcode := ReadBits(data, bitPos, int(inst.Bits))
+			if opcode != inst.Value {
+				continue
+			}
+			instValue := make(map[FieldKind]uint16)
+			instValue[Opcode] = opcode
+			pos := bitPos + int(inst.Bits)
+			for _, field := range inst.Fields {
+				if field.Bits == 0 {
+					instValue[field.Kind] = field.Value
+					continue
+				}
+				if field.Kind == DataW {
+					if instValue[W] == 1 {
+						dataHi := ReadBits(data, pos, int(field.Bits))
+						instValue[Data] = dataHi<<8 | instValue[Data]
+						pos += int(field.Bits)
+					}
+					continue
+				}
+				if field.Kind == Disp && field.Bits == 16 {
+					instValue[Disp] = ReadU16LE(data, pos)
+					pos += 16
+					continue
+				}
+				instValue[field.Kind] = ReadBits(data, pos, int(field.Bits))
+				pos += int(field.Bits)
+				if field.Kind == RM {
+					disp, inc := checkMod(data, instValue[Mod], instValue[RM], pos)
+					pos += inc
+					instValue[Disp] = disp
+				}
+			}
+			bitPos = pos
+			instructions = append(instructions, instValue)
+			break
+		}
+	}
+	return instructions
+}
