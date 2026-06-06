@@ -36,6 +36,7 @@ type InstructionPattern struct {
 }
 
 var instructionPatterns = []InstructionPattern{
+	// MOV
 	{Mnemonic: "MOV", Desc: "Register/memory to/from register",
 		Bits: 6, Value: 0b100010,
 		Fields: []Field{{Kind: D, Bits: 1}, {Kind: W, Bits: 1}, {Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}},
@@ -69,5 +70,55 @@ var instructionPatterns = []InstructionPattern{
 		Bits: 8, Value: 0b10001100,
 		Fields: []Field{{Kind: Mod, Bits: 2}, {Kind: Fix, Value: 0, Bits: 1}, {Kind: SR, Bits: 2}, {Kind: RM, Bits: 3},
 			{Kind: D, Bits: 0, Value: 0}},
+	},
+	// ADD
+	{Mnemonic: "ADD", Desc: "Reg/memory with register to either",
+		Bits: 6, Value: 0b0,
+		Fields: []Field{{Kind: D, Bits: 1}, {Kind: W, Bits: 1},
+			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}},
+	},
+	{Mnemonic: "ADD", Desc: "Immediate to register/memory",
+		Bits: 6, Value: 0b100000,
+		Fields: []Field{{Kind: S, Bits: 1}, {Kind: W, Bits: 1},
+			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
+	},
+	{Mnemonic: "ADD", Desc: "Immediate to accumulator",
+		Bits: 7, Value: 0b0000010,
+		Fields: []Field{{Kind: W, Bits: 1}, {Kind: Reg, Bits: 0, Value: 0b000}, {Kind: D, Bits: 0, Value: 1},
+			{Kind: Mod, Bits: 0, Value: 0b11}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
+	},
+	// SUB
+	{Mnemonic: "SUB", Desc: "Reg/memory and register to either",
+		Bits: 6, Value: 0b001010,
+		Fields: []Field{{Kind: D, Bits: 1}, {Kind: W, Bits: 1},
+			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}},
+	},
+	// Oo: The Value is the same for ADD! I don't know if I'm doing an add or a SUB! Fuck!
+	{Mnemonic: "SUB", Desc: "Immediate from register/memory",
+		Bits: 6, Value: 0b100000,
+		Fields: []Field{{Kind: S, Bits: 1}, {Kind: W, Bits: 1},
+			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
+	},
+	{Mnemonic: "SUB", Desc: "Immediate from accumulator",
+		Bits: 7, Value: 0b0010110,
+		Fields: []Field{{Kind: W, Bits: 1}, {Kind: Reg, Bits: 0, Value: 0b000}, {Kind: D, Bits: 0, Value: 1},
+			{Kind: Mod, Bits: 0, Value: 0b11}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
+	},
+	// CMP
+	{Mnemonic: "CMP", Desc: "Reg/memory and register",
+		Bits: 6, Value: 0b001110,
+		Fields: []Field{{Kind: D, Bits: 1}, {Kind: W, Bits: 1},
+			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}},
+	},
+	// Oo: The Value is the same for ADD! I don't know if I'm doing an add or a SUB! Fuck!
+	{Mnemonic: "CMP", Desc: "Immediate from register/memory",
+		Bits: 6, Value: 0b100000,
+		Fields: []Field{{Kind: S, Bits: 1}, {Kind: W, Bits: 1},
+			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
+	},
+	{Mnemonic: "CMP", Desc: "Immediate from accumulator",
+		Bits: 7, Value: 0b0011110,
+		Fields: []Field{{Kind: W, Bits: 1}, {Kind: Reg, Bits: 0, Value: 0b000}, {Kind: D, Bits: 0, Value: 1},
+			{Kind: Mod, Bits: 0, Value: 0b11}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
 	},
 }

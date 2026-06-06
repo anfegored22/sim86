@@ -13,25 +13,15 @@ var effectiveAddress = map[byte]byte{
 	0b111: 0b011000,
 }
 
+type Flags struct {
+	AF, CF, PF, SF, ZF, OF bool
+}
+
 type Registers struct {
 	R       map[byte]uint16
 	SR      map[byte]uint16
 	RNames  [8]string
 	SRNames [4]string
-}
-
-func NewRegisters() Registers {
-	var regs = map[byte]uint16{
-		0b000: 0, 0b001: 0, 0b010: 0, 0b011: 0,
-		0b100: 0, 0b101: 0, 0b110: 0, 0b111: 0,
-	}
-	var segRegs = map[byte]uint16{
-		0b00: 0, 0b01: 0,
-		0b10: 0, 0b11: 0,
-	}
-	return Registers{R: regs, SR: segRegs,
-		RNames:  [8]string{"AX", "CX", "DX", "BX", "SP", "BP", "SI", "DI"},
-		SRNames: [4]string{"ES", "CS", "SS", "DS"}}
 }
 
 func (r *Registers) Load(reg byte, w bool) uint16 {
@@ -46,6 +36,7 @@ func (r *Registers) Load(reg byte, w bool) uint16 {
 	}
 }
 
+// The data has been decoded in little-indian. We dont shift anything in anything
 func (r *Registers) Store(reg byte, w bool, data uint16) error {
 	if _, ok := r.R[reg]; !ok {
 		return fmt.Errorf("No register found")
@@ -75,7 +66,7 @@ func (r *Registers) DecodeEffectiveAddr(rm byte, disp int16, mod byte) int16 {
 	if reg2 != 0 {
 		return int16(r.Load(reg1, true)) + int16(r.Load(reg2, true)) + disp
 	}
-	return int16(r.Load(reg2, true))
+	return int16(r.Load(reg2, true)) + disp
 }
 
 func (r *Registers) Print() {
@@ -94,7 +85,7 @@ func (r *Registers) Print() {
 	}
 }
 
-func (r *Registers) Update(registers map[byte]uint16) {
-	fmt.Printf("\033[%dA", len(r.RNames)+1)
+func (r *Registers) Update() {
+	fmt.Printf("\033[%dA", len(r.RNames)+len(r.SRNames)+1)
 	r.Print()
 }

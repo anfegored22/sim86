@@ -25,7 +25,7 @@ func checkMod(data []byte, mod uint16, rm uint16, bitPos int) (uint16, int) {
 	return 0, 0
 }
 
-func DecodeInstructions(data []byte) []Instruction {
+func Decoder(data []byte) []Instruction {
 	bitPos := 0
 	var instructions []Instruction
 	for bitPos < len(data)*8 {

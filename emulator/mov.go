@@ -2,7 +2,7 @@ package emulator
 
 import "fmt"
 
-func ExecuteMov(inst Instruction, regs *Registers, memory *Memory) error {
+func ExecuteMov(inst Instruction, c *CPU) error {
 	switch {
 	case inst[Opcode] == 0b100010 || (inst[Opcode]>>1) == 0b101000:
 		wide := inst[W] == 1
@@ -10,23 +10,23 @@ func ExecuteMov(inst Instruction, regs *Registers, memory *Memory) error {
 		rm := byte(inst[RM])
 		mod := byte(inst[Mod])
 		if inst[D] == 0 {
-			src := regs.Load(reg, wide)
+			src := c.Registers.Load(reg, wide)
 			if mod == 0b11 {
-				return regs.Store(rm, wide, src)
+				return c.Registers.Store(rm, wide, src)
 			}
-			addr := regs.DecodeEffectiveAddr(rm, int16(inst[Disp]), mod)
-			return memory.Store(addr, src, wide)
+			addr := c.Registers.DecodeEffectiveAddr(rm, int16(inst[Disp]), mod)
+			return c.Memory.Store(addr, src, wide)
 		} else {
 			if mod == 0b11 {
-				src := regs.Load(rm, wide)
-				return regs.Store(reg, wide, src)
+				src := c.Registers.Load(rm, wide)
+				return c.Registers.Store(reg, wide, src)
 			} else {
-				addr := regs.DecodeEffectiveAddr(rm, int16(inst[Disp]), mod)
-				src, err := memory.Load(addr, wide)
+				addr := c.Registers.DecodeEffectiveAddr(rm, int16(inst[Disp]), mod)
+				src, err := c.Memory.Load(addr, wide)
 				if err != nil {
 					return err
 				}
-				return regs.Store(reg, wide, src)
+				return c.Registers.Store(reg, wide, src)
 			}
 		}
 	case inst[Opcode] == 0b1100011:
@@ -35,39 +35,39 @@ func ExecuteMov(inst Instruction, regs *Registers, memory *Memory) error {
 		mod := byte(inst[Mod])
 		src := inst[Data]
 		if mod == 0b11 {
-			return regs.Store(rm, wide, src)
+			return c.Registers.Store(rm, wide, src)
 		}
-		addr := regs.DecodeEffectiveAddr(rm, int16(inst[Disp]), mod)
-		return memory.Store(addr, src, wide)
+		addr := c.Registers.DecodeEffectiveAddr(rm, int16(inst[Disp]), mod)
+		return c.Memory.Store(addr, src, wide)
 	case inst[Opcode] == 0b1011:
-		return regs.Store(byte(inst[Reg]), inst[W] == 1, inst[Data])
+		return c.Registers.Store(byte(inst[Reg]), inst[W] == 1, inst[Data])
 	case inst[Opcode]>>2 == 0b100011:
 		sr := byte(inst[SR])
 		rm := byte(inst[RM])
 		mod := byte(inst[Mod])
 		disp := int16(inst[Disp])
 		if inst[D] == 0 {
-			src := regs.SR[sr]
+			src := c.Registers.SR[sr]
 			if mod == 0b11 {
-				return regs.Store(rm, true, src)
+				return c.Registers.Store(rm, true, src)
 			}
-			addr := regs.DecodeEffectiveAddr(rm, disp, mod)
-			return memory.Store(addr, src, true)
+			addr := c.Registers.DecodeEffectiveAddr(rm, disp, mod)
+			return c.Memory.Store(addr, src, true)
 		} else {
 			if mod == 0b11 {
-				src := regs.Load(rm, true)
-				regs.SR[sr] = src
+				src := c.Registers.Load(rm, true)
+				c.Registers.SR[sr] = src
 				return nil
 			}
-			addr := regs.DecodeEffectiveAddr(rm, disp, mod)
-			src, err := memory.Load(addr, true)
+			addr := c.Registers.DecodeEffectiveAddr(rm, disp, mod)
+			src, err := c.Memory.Load(addr, true)
 			if err != nil {
 				return fmt.Errorf("error loading address %b: %w", addr, err)
 			}
-			if _, ok := regs.SR[sr]; !ok {
+			if _, ok := c.Registers.SR[sr]; !ok {
 				return fmt.Errorf("No segment register found: %0b", sr)
 			}
-			regs.SR[sr] = src
+			c.Registers.SR[sr] = src
 			return nil
 		}
 	}

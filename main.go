@@ -24,11 +24,10 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	memory := emulator.Memory{}
-	regs := emulator.NewRegisters()
-	regs.Print()
+	cpu := emulator.NewCPU()
+	cpu.Registers.Print()
 
-	instructions := DecodeInstructions(f)
+	instructions := emulator.Decoder(f)
 	reader := bufio.NewReader(os.Stdin)
 	for _, inst := range instructions {
 		_, err := reader.ReadString('\n')
@@ -36,7 +35,9 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		ExecuteMov(inst)
-		UpdateRegisters(registers)
+		if err := emulator.ExecuteMov(inst, &cpu.Registers, &cpu.Memory); err != nil {
+			os.Exit(1)
+		}
+		cpu.Registers.Update() // This only prints it doesn't change state
 	}
 }
