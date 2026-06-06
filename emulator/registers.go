@@ -13,10 +13,6 @@ var effectiveAddress = map[byte]byte{
 	0b111: 0b011000,
 }
 
-type Flags struct {
-	AF, CF, PF, SF, ZF, OF bool
-}
-
 type Registers struct {
 	R       map[byte]uint16
 	SR      map[byte]uint16
