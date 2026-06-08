@@ -25,7 +25,7 @@ func main() {
 		os.Exit(1)
 	}
 	cpu := emulator.NewCPU()
-	cpu.Registers.Print()
+	cpu.Print()
 
 	instructions := emulator.Decoder(f)
 	reader := bufio.NewReader(os.Stdin)
@@ -35,9 +35,9 @@ func main() {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		if err := emulator.ExecuteMov(inst, &cpu.Registers, &cpu.Memory); err != nil {
+		if err := cpu.Execute(inst); err != nil {
 			os.Exit(1)
 		}
-		cpu.Registers.Update() // This only prints it doesn't change state
+		cpu.Update(inst) // This only prints it doesn't change state
 	}
 }

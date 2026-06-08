@@ -21,7 +21,7 @@ type Registers struct {
 }
 
 func (r *Registers) Load(reg byte, w bool) uint16 {
-	v, _ := r.R[reg]
+	v, _ := r.R[reg] // Load never fails!
 	if w {
 		return v
 	}
@@ -62,26 +62,5 @@ func (r *Registers) DecodeEffectiveAddr(rm byte, disp int16, mod byte) int16 {
 	if reg2 != 0 {
 		return int16(r.Load(reg1, true)) + int16(r.Load(reg2, true)) + disp
 	}
-	return int16(r.Load(reg2, true)) + disp
-}
-
-func (r *Registers) Print() {
-	for i, name := range r.RNames {
-		value := uint16(r.R[byte(i)])
-		high := byte(value >> 8)
-		low := byte(value)
-
-		fmt.Print("\033[2K") // clear current line before overwriting shorter old values
-		fmt.Printf("%s: %08b | %08b (%d)\n", name, high, low, r.R[byte(i)])
-	}
-	for i, name := range r.SRNames {
-		value := uint16(r.SR[byte(i)])
-		fmt.Print("\033[2K") // clear current line before overwriting shorter old values
-		fmt.Printf("%s: %16b (%d)\n", name, value, r.SR[byte(i)])
-	}
-}
-
-func (r *Registers) Update() {
-	fmt.Printf("\033[%dA", len(r.RNames)+len(r.SRNames)+1)
-	r.Print()
+	return int16(r.Load(reg1, true)) + disp
 }
