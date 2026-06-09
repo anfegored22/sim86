@@ -2,55 +2,50 @@ package emulator
 
 type Instruction map[FieldKind]uint16
 
-func Decoder(data []byte) []Instruction {
-	bitPos := 0
-	var instructions []Instruction
-	for bitPos < len(data)*8 {
-		for _, inst := range instructionPatterns {
-			opcode := ReadBits(data, bitPos, int(inst.Bits))
-			if opcode != inst.Value {
+func Decode(data []byte, cpu *CPU) Instruction {
+	instValue := make(map[FieldKind]uint16)
+	for _, inst := range instructionPatterns {
+		opcode := ReadBits(data, cpu.Registers.IP, int(inst.Bits))
+		if opcode != inst.Value {
+			continue
+		}
+		instValue[Opcode] = opcode
+		instValue[Operation] = inst.Mnemonic
+		pos := cpu.Registers.IP + int(inst.Bits)
+		for _, field := range inst.Fields {
+			if field.Bits == 0 {
+				instValue[field.Kind] = field.Value
 				continue
 			}
-			instValue := make(map[FieldKind]uint16)
-			instValue[Opcode] = opcode
-			instValue[Operation] = inst.Mnemonic
-			pos := bitPos + int(inst.Bits)
-			for _, field := range inst.Fields {
-				if field.Bits == 0 {
-					instValue[field.Kind] = field.Value
-					continue
+			if field.Kind == DataW {
+				if instValue[W] == 1 && instValue[S] == 0 {
+					dataHi := ReadBits(data, pos, int(field.Bits))
+					instValue[Data] = dataHi<<8 | instValue[Data]
+					pos += int(field.Bits)
 				}
-				if field.Kind == DataW {
-					if instValue[W] == 1 && instValue[S] == 0 {
-						dataHi := ReadBits(data, pos, int(field.Bits))
-						instValue[Data] = dataHi<<8 | instValue[Data]
-						pos += int(field.Bits)
-					}
-					if instValue[W] == 1 && instValue[S] == 1 && instValue[Data]&0x0080 != 0 {
-						instValue[Data] = instValue[Data] | 0xff00
-					}
-					continue
+				if instValue[W] == 1 && instValue[S] == 1 && instValue[Data]&0x0080 != 0 {
+					instValue[Data] = instValue[Data] | 0xff00
 				}
-				if field.Kind == Disp && field.Bits == 16 {
-					instValue[Disp] = ReadU16LE(data, pos)
-					pos += 16
-					continue
-				}
-				instValue[field.Kind] = ReadBits(data, pos, int(field.Bits))
-				pos += int(field.Bits)
-				if field.Kind == RM {
-					disp, inc := checkMod(data, instValue[Mod], instValue[RM], pos)
-					pos += inc
-					instValue[Disp] = disp
-				}
+				continue
 			}
-			bitPos = pos
-			instValue[Operation] = resolveOp(instValue)
-			instructions = append(instructions, instValue)
-			break
+			if field.Kind == Disp && field.Bits == 16 {
+				instValue[Disp] = ReadU16LE(data, pos)
+				pos += 16
+				continue
+			}
+			instValue[field.Kind] = ReadBits(data, pos, int(field.Bits))
+			pos += int(field.Bits)
+			if field.Kind == RM {
+				disp, inc := checkMod(data, instValue[Mod], instValue[RM], pos)
+				pos += inc
+				instValue[Disp] = disp
+			}
 		}
+		cpu.Registers.IP = pos
+		instValue[Operation] = resolveOp(instValue)
+		break
 	}
-	return instructions
+	return instValue
 }
 
 func checkMod(data []byte, mod uint16, rm uint16, bitPos int) (uint16, int) {

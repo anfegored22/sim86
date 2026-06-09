@@ -20,6 +20,7 @@ const (
 	Disp
 	AddrLo
 	AddrHi
+	IPinc8
 )
 
 type Mnemonic = uint16
@@ -29,6 +30,7 @@ const (
 	Add
 	Sub
 	Cmp
+	Jump
 )
 
 type Field struct {
@@ -119,7 +121,6 @@ var instructionPatterns = []InstructionPattern{
 		Fields: []Field{{Kind: D, Bits: 1}, {Kind: W, Bits: 1},
 			{Kind: Mod, Bits: 2}, {Kind: Reg, Bits: 3}, {Kind: RM, Bits: 3}},
 	},
-	// Oo: The Value is the same for ADD! I don't know if I'm doing an add or a SUB! Fuck!
 	{Mnemonic: Cmp, Desc: "Immediate from register/memory",
 		Bits: 6, Value: 0b100000,
 		Fields: []Field{{Kind: S, Bits: 1}, {Kind: W, Bits: 1},
@@ -130,4 +131,7 @@ var instructionPatterns = []InstructionPattern{
 		Fields: []Field{{Kind: W, Bits: 1}, {Kind: Reg, Bits: 0, Value: 0b000}, {Kind: D, Bits: 0, Value: 1},
 			{Kind: Mod, Bits: 0, Value: 0b11}, {Kind: Data, Bits: 8}, {Kind: DataW, Bits: 8}},
 	},
+	// Jump
+	{Mnemonic: Jump, Desc: "Jump on equal/zero", Bits: 8, Value: 0b01110100, Fields: []Field{{Kind: IPinc8, Bits: 8}}},
+	{Mnemonic: Jump, Desc: "Jump on not equal/zero", Bits: 8, Value: 0b01110101, Fields: []Field{{Kind: IPinc8, Bits: 8}}},
 }

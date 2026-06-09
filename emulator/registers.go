@@ -16,6 +16,7 @@ var effectiveAddress = map[byte]byte{
 type Registers struct {
 	R       map[byte]uint16
 	SR      map[byte]uint16
+	IP      int
 	RNames  [8]string
 	SRNames [4]string
 }

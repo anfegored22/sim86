@@ -42,6 +42,8 @@ func (c *CPU) Execute(inst Instruction) error {
 		return ExecuteSub(inst, c)
 	case Cmp:
 		return ExecuteCmp(inst, c)
+	case Jump:
+		return ExecuteJump(inst, c)
 	}
 	return fmt.Errorf("Don't understand operation %b", inst[Opcode])
 }
@@ -159,6 +161,6 @@ func (c *CPU) Print() {
 func (c *CPU) Update(inst Instruction) {
 	fmt.Printf("\033[%dA", len(c.Registers.RNames)+len(c.Registers.SRNames)+4)
 	c.Print()
-	fmt.Printf("Instruction: opcode=%06b d=%d w=%d mod=%02b reg=%03b rm=%03b\n",
-		inst[Opcode], inst[D], inst[W], inst[Mod], inst[Reg], inst[RM])
+	fmt.Printf("Instruction: opcode=%06b d=%d w=%d mod=%02b reg=%03b rm=%03b ip=%08b + %08b\n",
+		inst[Opcode], inst[D], inst[W], inst[Mod], inst[Reg], inst[RM], c.Registers.IP, inst[IPinc8])
 }

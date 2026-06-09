@@ -19,7 +19,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	f, err := os.ReadFile(*fn)
+	binary, err := os.ReadFile(*fn)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -27,14 +27,16 @@ func main() {
 	cpu := emulator.NewCPU()
 	cpu.Print()
 
-	instructions := emulator.Decoder(f)
 	reader := bufio.NewReader(os.Stdin)
-	for _, inst := range instructions {
+
+	for cpu.Registers.IP < len(binary)*8 {
+		inst := emulator.Decode(binary, &cpu) // Modifies the IP register
 		_, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
+		// Execute also modifies the IP register! Two many side effects?
 		if err := cpu.Execute(inst); err != nil {
 			os.Exit(1)
 		}
